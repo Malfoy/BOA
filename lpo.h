@@ -99,13 +99,13 @@ LPOSequence_T *buildup_progressive_lpo(int nseq, LPOSequence_T **seqs,
 				       ResidueScoreMatrix_T *score_matrix,
 				       int use_aggressive_fusion,
                                        int do_progressive,
-				       char score_file[], 
+				       char score_file[],
 				       LPOScore_T (*scoring_function)
 				       (int,int,LPOLetter_T [],LPOLetter_T [],
 					ResidueScoreMatrix_T *),
                                        int use_global_alignment,
 				       int preserve_sequence_order);
-				       
+
 LPOSequence_T *buildup_pairwise_lpo(LPOSequence_T seq1[],LPOSequence_T seq2[],
 				    ResidueScoreMatrix_T *score_matrix,
 				    int use_aggressive_fusion,
@@ -113,7 +113,7 @@ LPOSequence_T *buildup_pairwise_lpo(LPOSequence_T seq1[],LPOSequence_T seq2[],
 				    (int,int,LPOLetter_T [],LPOLetter_T [],
 				     ResidueScoreMatrix_T *),
                                     int use_global_alignment);
-				    
+
 /**************************************************** lpo_format.c */
 void write_lpo(FILE *ifile,LPOSequence_T *seq,
 	       ResidueScoreMatrix_T *score_matrix);
@@ -130,6 +130,10 @@ void write_lpo_bundle_as_fasta(FILE *ifile,LPOSequence_T *seq,
 void export_clustal_seqal(FILE *ifile,
 			  LPOSequence_T *seq,
 			  int nsymbol,char symbol[]);
+int xlate_lpo_to_al(LPOSequence_T *seq,
+		    int nsymbol,char symbol[],int ibundle,
+		    char gap_character,
+		    char ***p_seq_pos,char **p_p,char **p_include);
 
 
 /****************************************************** heaviest_bundle.c */

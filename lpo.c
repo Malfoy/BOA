@@ -267,16 +267,17 @@ void reindex_lpo_source_seqs (LPOSequence_T *seq, int *perm)
   len = seq->length;
   nseq = seq->nsource_seq;
   
-  CALLOC (map, len, int);
-  CALLOC (invmap, len, int);
+  CALLOC (map, nseq, int);
+  CALLOC (invmap, nseq, int);
   
   /* BUILD INITIAL MAP AND INVERSE MAP: */
   for (i=0; i<nseq; i++) {
-    map[i] = invmap[i] = -1;
+    map[i] = -1;
+    invmap[i] = -1;
   }
   for (i=0; i<nseq; i++) {
     map[i] = perm[i];
-    IF_GUARD (map[i]>=nseq || map[i]<0 || invmap[map[i]]!=-1, 1.1, (ERRTXT,"Bad argument! 'perm' must be a permutation of [0,%d]\n",nseq-1), CRASH);
+    IF_GUARD (map[i]>=nseq || map[i]<0 || invmap[map[i]]!=-1, 1.1, (ERRTXT,"Bad argument! 'perm' must be a permutation of [0,%d]\n", nseq-1), CRASH);
     invmap[map[i]] = i;
   }
   

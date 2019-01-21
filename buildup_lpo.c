@@ -415,25 +415,35 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
   /* INITIALIZE ALL UNINITIALIZED SEQS: */
   for (i=0;i<nseq;i++) {
     if (all_seqs[i]->letter == NULL) {
+      // fprintf(stderr, "initialize_seqs_as_lpo\n");
       initialize_seqs_as_lpo(1,all_seqs[i],score_matrix);
+      // fprintf(stderr, "ok\n");
     }
+    // fprintf(stderr, "lpo_index_symbols\n");
     lpo_index_symbols(all_seqs[i],score_matrix); /* MAKE SURE LPO IS TRANSLATED */
+    // fprintf(stderr, "ok\n");
   }
 
   /* RETURN IF NOTHING TO ALIGN */
+  // fprintf(stderr, "return test\n");
   if (nseq<=0)
     return NULL;
   else if (nseq==1)
     return all_seqs[0];
+  // fprintf(stderr, "ok\n");
 
-
+  // fprintf(stderr, "new_seq = \n");
   new_seq = all_seqs[0];
+  // fprintf(stderr, "ok\n");
 
+  // fprintf(stderr, "CALLOCS\n");
   CALLOC(seq_cluster,nseq,int);  /* MAPS SEQS (or CLUSTERS) TO CLUSTER THEY'RE IN */
   CALLOC(seq_id_in_cluster,nseq,int);  /* INDEXES SEQS (or CLUSTERS) WITHIN EACH CLUSTER */
   CALLOC(cluster_size,nseq,int);  /* COUNTS SEQS IN SAME CLUSTER (updated w/ merges) */
   CALLOC(initial_nseq,nseq,int);  /* COUNTS SEQS INITIALLY IN EACH CLUSTER (not updated w/ merges) */
+  // fprintf(stderr, "ok\n");
 
+  // fprintf(stderr, "forloop\n");
   for (i=nseq_tot=0;i<nseq;i++) {
     seq_cluster[i] = i;  /* CREATE TRIVIAL MAPPING, EACH SEQ ITS OWN CLUSTER */
     seq_id_in_cluster[i] = 0;
@@ -441,7 +451,9 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
     initial_nseq[i] = cluster_size[i];
     nseq_tot += cluster_size[i];
   }
+  // fprintf(stderr, "ok\n");
 
+  // fprintf(stderr, "ifscorefile\n");
   if (score_file) {
     ifile=fopen(score_file,"r");
     if (ifile==NULL) {
@@ -453,8 +465,10 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
   else {
     ifile = NULL;
   }
+  // fprintf(stderr, "ok\n");
 
 
+  // fprintf(stderr, "read_seqpair_scorefile\n");
   score = read_seqpair_scorefile(nseq,all_seqs,score_matrix,scoring_function,use_global_alignment,
 				 do_progressive,ifile,&nscore);
   if (score==NULL) {
@@ -464,11 +478,13 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
   }
   if (ifile)
     fclose (ifile);
+  // fprintf(stderr, "ok\n");
 
   for (iscore=0;iscore<nscore;iscore++) {
 
     /* NB: NEW CLUSTER ID WILL BE MINIMUM OF INPUT IDs,
        SO MASTER CLUSTER WILL ALWAYS BE CLUSTER 0. */
+    // fprintf(stderr, "gros if\n");
     if (seq_cluster[score[iscore].i] < seq_cluster[score[iscore].j]) {
       cluster_i=seq_cluster[score[iscore].i];
       cluster_j=seq_cluster[score[iscore].j];
@@ -479,6 +495,7 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
     }
     else /* CLUSTERS ALREADY FUSED, SO SKIP THIS PAIR */
       continue;
+    // fprintf(stderr, "ok\n");
 
     new_seq = all_seqs[cluster_i];
     total_alloc = new_seq->length * (sizeof(LPOLetter_T) + all_seqs[cluster_j]->length);
@@ -491,25 +508,32 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
     }
 
 #ifdef USE_LOCAL_NEUTRALITY_CORRECTION /* NO LONGER USED */
+    // fprintf(stderr, "balance_matrix_score\n");
     if (score_matrix->nfreq>0) { /* CALCULATE BALANCED SCORING ON EACH PO */
       balance_matrix_score(new_seq->length,new_seq->letter,score_matrix);
       balance_matrix_score(all_seqs[cluster_j]->length,all_seqs[cluster_j]->letter,
 			   score_matrix);
     }
+    // fprintf(stderr, "ok\n");
 #endif
 
+    // fprintf(stderr, "buildup_pairwise_lpo\n");
     buildup_pairwise_lpo(new_seq,all_seqs[cluster_j],score_matrix,
 			 use_aggressive_fusion,
                          scoring_function,use_global_alignment);
-
+    // fprintf(stderr, "ok\n");
+    // fprintf(stderr, "LOOP\n");
     LOOP (i,nseq) {  /* APPEND ALL MEMBERS OF cluster_j TO cluster_i */
       if (seq_cluster[i] == cluster_j) {
 	seq_cluster[i] = cluster_i;
       	seq_id_in_cluster[i] += cluster_size[cluster_i];
       }
     }
+    // fprintf(stderr, "ok\n");
+    // fprintf(stderr, "cluster_size affects\n");
     cluster_size[cluster_i] += cluster_size[cluster_j];
     cluster_size[cluster_j] = 0;
+    // fprintf(stderr, "ok\n");
   }
 
   if (preserve_sequence_order) {  /* PUT SEQUENCES WITHIN LPO BACK IN THEIR ORIGINAL ORDER: */
@@ -518,21 +542,25 @@ LPOSequence_T *buildup_progressive_lpo(int nseq,LPOSequence_T **all_seqs,
 
     for (i=nseq_tot=0; i<nseq; i++) {
       for (j=0; j<initial_nseq[i]; j++) {
-	perm[seq_id_in_cluster[i] + j] = (nseq_tot++);
+           perm[seq_id_in_cluster[i] + j] = (nseq_tot);
+           nseq_tot++;
       }
     }
-    for (i=0; i<nseq_tot; i++) printf ("%d ", perm[i]); printf ("\n");
-
+    // for (i=0; i<nseq_tot; i++) printf ("%d ", perm[i]); printf ("\n");
+    // fprintf(stderr, "reindex_lpo_source_seqs\n");
     reindex_lpo_source_seqs (new_seq, perm);
     FREE (perm);
+    // fprintf(stderr, "ok\n");
   }
 
+  // fprintf(stderr, "FREES\n");
   free_and_exit:
   FREE (initial_nseq);
   FREE (seq_cluster);
   FREE (cluster_size);
   FREE (seq_id_in_cluster);
   FREE (score);
+  // fprintf(stderr, "ok\n");
 
   return new_seq; /* RETURN THE FINAL MASTER CLUSTER... */
 }
